@@ -21,7 +21,7 @@ if __name__ == "__main__":
     items_to_pack = [
         ItemType("MyPOS:Go2", 11, 18.5, 8.5, quantity=7),
         ItemType("Phone", 15, 8, 1.5, quantity=3),
-        ItemType("Charger", 5, 5, 2, quantity=10),
+        ItemType("Charger", 5, 5, 2, quantity=16),
     ]
 
     # Pack all items
