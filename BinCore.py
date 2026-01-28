@@ -32,7 +32,7 @@ class ItemType:
     length: float
     width: float
     height: float
-    quantity: int = 1
+    quantity: int = 0
     can_rotate: bool = True
 
     @property
