@@ -1,16 +1,12 @@
 """
 3D bin-packing / box recommendation algorithm (geometry-only).
 
-Main features
-- 3D placement with a bottom-left-back heuristic (try "corner" candidate points first).
-- Adaptive grid fallback to avoid exploding runtimes with very small grid_resolution.
-- Multi-item (multi-SKU) greedy packing: open boxes as needed, respecting max_boxes.
-- Single-SKU planner: compute a good box mix using "real capacity" (fast simulation per box type),
-  then pack with those limits.
+Heuristic:
+- First-Fit-Decreasing by item volume.
+- Bottom-left-back scan (corner positions + adaptive grid).
+- Multi-SKU greedy packer: opens boxes as needed.
+- Single-SKU planner: computes a good box mix using simulated capacity.
 
-Notes
-- This is a heuristic 3D packer: exact optimal packing is NP-hard.
-- Units are whatever you use consistently (cm/mm/etc.).
 """
 
 from __future__ import annotations
@@ -29,7 +25,8 @@ from math import inf, ceil
 @dataclass
 class ItemType:
     """
-    Item definition. 'quantity' can be > 1 (it will be expanded in the packers).
+    Represents a type of item to pack.
+    Geometry-only; weight is ignored.
     """
     id: str
     length: float
@@ -46,9 +43,14 @@ class ItemType:
 @dataclass
 class BoxType:
     """
-    Box definition.
-    max_boxes: stock limit for this box type (None = unlimited).
-    cost: arbitrary cost (material, shipping, etc.).
+    Represents a type of box that can be used.
+
+    max_boxes:
+        Maximum number of boxes of this type that can be used.
+        If None, there is no limit.
+
+    cost:
+        Economic cost of using one box of this type.
     """
     id: str
     inner_length: float
@@ -66,21 +68,20 @@ class BoxType:
 class PlacedItem:
     """
     Concrete item instance placed in a specific box.
-    rotation holds the used (L,W,H) after rotation.
     """
     item_id: str
     box_id: str
     length: float
     width: float
     height: float
-    position: Tuple[float, float, float]   # (x, y, z) min corner
+    position: Tuple[float, float, float]   # (x, y, z)
     rotation: Tuple[float, float, float]   # (L, W, H) after rotation
 
 
 @dataclass
 class BoxInstance:
     """
-    Concrete box instance that we fill with PlacedItem.
+    Concrete box instance we are filling.
     """
     box_type: BoxType
     instance_index: int
@@ -103,6 +104,9 @@ def orientations_of(item: ItemType) -> List[Tuple[float, float, float]]:
 
 
 def fits_in_box(rot_dims: Tuple[float, float, float], box: BoxType) -> bool:
+    """
+    Check if an item with rotated dimensions rot_dims fits inside the box.
+    """
     l, w, h = rot_dims
     return (l <= box.inner_length) and (w <= box.inner_width) and (h <= box.inner_height)
 
@@ -110,7 +114,6 @@ def fits_in_box(rot_dims: Tuple[float, float, float], box: BoxType) -> bool:
 def aabb_overlap(a_min, a_max, b_min, b_max) -> bool:
     """
     Axis-aligned bounding box overlap test in 3D.
-    True means overlap; False means separated.
     """
     for i in range(3):
         if a_max[i] <= b_min[i] or b_max[i] <= a_min[i]:
@@ -121,8 +124,11 @@ def aabb_overlap(a_min, a_max, b_min, b_max) -> bool:
 def collides_with_existing(
     box: BoxInstance,
     position: Tuple[float, float, float],
-    dims: Tuple[float, float, float]
+    dims: Tuple[float, float, float],
 ) -> bool:
+    """
+    Check if placing an item at position with dims would collide with any existing item.
+    """
     x, y, z = position
     l, w, h = dims
     new_min = (x, y, z)
@@ -156,14 +162,10 @@ def find_feasible_position(
     max_grid_points: int = 8000,
 ) -> Optional[Tuple[float, float, float]]:
     """
-    Find a feasible (x,y,z) position for dims inside 'box', avoiding collisions.
+    Find a feasible position for dims inside box using a bottom-left-back heuristic.
 
-    Strategy:
-    1) Try a small set of "corner" candidate positions:
-       - origin
-       - adjacent to each placed item (right/behind/top/left/front/bottom)
-    2) If that fails, optionally try a grid scan, but with an adaptive resolution
-       so the number of points doesn't explode.
+    1) Try corner-like candidate positions (origin + adjacent to existing items).
+    2) If none work, optionally do a coarse grid scan with adaptive resolution.
     """
     l, w, h = dims
     L = box.box_type.inner_length
@@ -173,44 +175,39 @@ def find_feasible_position(
     if l > L or w > W or h > H:
         return None
 
-    # --- 1) Corner candidates (fast) ---
+    # 1) Corner candidates
     candidate_positions = set()
     candidate_positions.add((0.0, 0.0, 0.0))
 
     for placed in box.items:
         px, py, pz = placed.position
         pl, pw, ph = placed.rotation
-
         adj = [
-            (px + pl, py, pz),      # right
-            (px, py + pw, pz),      # behind
-            (px, py, pz + ph),      # top
-            (px - l, py, pz),       # left
-            (px, py - w, pz),       # front
-            (px, py, pz - h),       # below
+            (px + pl, py, pz),
+            (px, py + pw, pz),
+            (px, py, pz + ph),
+            (px - l, py, pz),
+            (px, py - w, pz),
+            (px, py, pz - h),
         ]
-
         for (x, y, z) in adj:
             if 0 <= x <= L - l + 1e-6 and 0 <= y <= W - w + 1e-6 and 0 <= z <= H - h + 1e-6:
                 candidate_positions.add((round(x, 6), round(y, 6), round(z, 6)))
 
-    # bottom-left-back priority
     for pos in sorted(candidate_positions, key=lambda p: (p[2], p[1], p[0])):
         if not collides_with_existing(box, pos, dims):
             return pos
 
-    # --- 2) Grid fallback (adaptive) ---
+    # 2) Grid fallback (adaptive)
     if resolution <= 0:
         return None
 
-    # Estimate point count; coarsen if needed
     nx = int((L - l) // resolution) + 1
     ny = int((W - w) // resolution) + 1
     nz = int((H - h) // resolution) + 1
     total_points = max(nx, 0) * max(ny, 0) * max(nz, 0)
 
     if total_points > max_grid_points and total_points > 0:
-        # Increase resolution so total_points becomes ~max_grid_points
         factor = (total_points / max_grid_points) ** (1 / 3)
         resolution *= factor
 
@@ -218,7 +215,6 @@ def find_feasible_position(
     ys = [round(v, 6) for v in frange(0.0, W - w + 1e-6, resolution)]
     zs = [round(v, 6) for v in frange(0.0, H - h + 1e-6, resolution)]
 
-    # Iterate in bottom-left-back order (z, y, x)
     for z in zs:
         for y in ys:
             for x in xs:
@@ -237,8 +233,7 @@ def find_feasible_position(
 
 def _expand_items(items: List[ItemType]) -> List[ItemType]:
     """
-    Expand ItemType(quantity>1) into a flat list of ItemType(quantity=1),
-    assigning unique ids with #index suffix.
+    Expand items with quantity>1 into a flat list of quantity=1 items.
     """
     expanded: List[ItemType] = []
     for it in items:
@@ -261,20 +256,39 @@ def _item_can_fit_in_box_type(item: ItemType, bt: BoxType) -> bool:
     return any(fits_in_box(o, bt) for o in oris)
 
 
+def _orientation_capacity_in_box(dims: Tuple[float, float, float], bt: BoxType) -> int:
+    """
+    Using a simple tiling estimate: how many items with 'dims' can fit in an empty box bt?
+    (Axis-aligned integer tiling.)
+    """
+    l, w, h = dims
+    if l > bt.inner_length or w > bt.inner_width or h > bt.inner_height:
+        return 0
+    nx = int(bt.inner_length // l)
+    ny = int(bt.inner_width // w)
+    nz = int(bt.inner_height // h)
+    return nx * ny * nz
+
+
 def _try_place_item_in_box(box: BoxInstance, item: ItemType, grid_resolution: float) -> bool:
     """
-    Try to place item in box; return True if placed.
+    Try to place item in box; orientations are ordered by how many copies
+    of that orientation can fit in an empty box (capacity), then by fill.
+    This fixes the "flat vs vertical" orientation issue.
     """
     oris = orientations_of(item) if item.can_rotate else [(item.length, item.width, item.height)]
 
-    # Prefer orientations that fill the box better
     def orientation_score(dims):
-        l, w, h = dims
         bt = box.box_type
-        fit = (l / bt.inner_length) * (w / bt.inner_width) * (h / bt.inner_height)
-        return -fit
+        capacity = _orientation_capacity_in_box(dims, bt)
+        if capacity <= 0:
+            return (0, 0.0)
+        l, w, h = dims
+        fill = (l / bt.inner_length) * (w / bt.inner_width) * (h / bt.inner_height)
+        return (capacity, fill)
 
-    oris.sort(key=orientation_score)
+    # Sort by capacity descending, then fill descending
+    oris.sort(key=orientation_score, reverse=True)
 
     for dims in oris:
         if not fits_in_box(dims, box.box_type):
@@ -300,7 +314,7 @@ def _try_place_item_in_box(box: BoxInstance, item: ItemType, grid_resolution: fl
 
 
 # ============================================================
-# 4. MULTI-SKU PACKER (LIST OF ITEMS)
+# 4. MULTI-SKU PACKER (GENERAL LIST OF ITEMS)
 # ============================================================
 
 def pack_order(
@@ -309,37 +323,33 @@ def pack_order(
     grid_resolution: float = 1.0,
 ) -> Tuple[List[BoxInstance], List[ItemType]]:
     """
-    Pack a LIST of items (possibly multiple SKUs) into available box types.
+    Pack a list of items (possibly multiple SKUs) into available box types.
 
-    Logic:
-    - Expand items and sort by volume (FFD).
-    - For each item: try to place into existing boxes.
-    - If not possible, open a new box chosen with a lookahead score that approximates
-      "minimize number of boxes first", then "minimize waste", then "minimize cost".
+    Strategy:
+    - Expand items (quantity>1 -> flat list), sort by volume desc.
+    - For each item:
+      1) Try existing boxes (fullest first).
+      2) If not placed, open a new box chosen to roughly minimize box count
+         and waste via volume-based scoring.
     - Respect max_boxes per box type.
-
-    Returns:
-    - boxes: list of used BoxInstance
-    - unassigned_items: list of items (quantity=1 each) that couldn't be packed
     """
     expanded = _expand_items(items)
     expanded.sort(key=lambda it: it.volume, reverse=True)
 
-    # Sort box types by volume ascending for tie-breaks, but we evaluate all anyway.
     box_types_list = list(box_types)
     opened_counts: Dict[str, int] = {bt.id: 0 for bt in box_types_list}
 
     boxes: List[BoxInstance] = []
     unassigned: List[ItemType] = []
 
-    def pile_volume_from(index: int) -> float:
-        return sum(it.volume for it in expanded[index:])
+    def pile_volume_from(idx: int) -> float:
+        return sum(it.volume for it in expanded[idx:])
 
     def can_open(bt: BoxType) -> bool:
         return (bt.max_boxes is None) or (opened_counts[bt.id] < bt.max_boxes)
 
     def open_new_box_for_item(item: ItemType, current_index: int) -> Optional[BoxInstance]:
-        pile_vol = pile_volume_from(current_index)  # includes current item and remaining
+        pile_vol = pile_volume_from(current_index)
         candidates: List[BoxType] = []
 
         for bt in box_types_list:
@@ -352,13 +362,10 @@ def pack_order(
             return None
 
         def score(bt: BoxType):
-            # Approximate "boxes needed" by volume (works well as a first-order proxy)
-            approx_boxes_needed = ceil(pile_vol / bt.volume) if bt.volume > 0 else inf
-
-            # Prefer smaller waste (if approx boxes equal)
-            waste = (approx_boxes_needed * bt.volume) - pile_vol
-
-            # Final tie-breaker: lower cost, then smaller box volume
+            if bt.volume <= 0:
+                return (inf, inf, inf, inf)
+            approx_boxes_needed = ceil(pile_vol / bt.volume)
+            waste = approx_boxes_needed * bt.volume - pile_vol
             return (approx_boxes_needed, waste, bt.cost, bt.volume)
 
         candidates.sort(key=score)
@@ -370,11 +377,10 @@ def pack_order(
         boxes.append(new_box)
         return new_box
 
-    # Main loop
     for i, item in enumerate(expanded):
         placed = False
 
-        # Try existing boxes first: prefer fuller ones
+        # Try existing boxes (fullest first)
         for box in sorted(
             boxes,
             key=lambda b: -(
@@ -394,38 +400,33 @@ def pack_order(
             continue
 
         if not _try_place_item_in_box(new_box, item, grid_resolution):
-            # If we opened a box that geometrically fits the item but placement fails,
-            # treat it as unassigned (rare with this heuristic).
             unassigned.append(item)
 
     return boxes, unassigned
 
 
 # ============================================================
-# 5. SINGLE-SKU PLANNER (PRECISE BOX-MIX LIKE YOUR SKU LOGIC)
+# 5. SINGLE-SKU PLANNER (PRECISE BOX-MIX)
 # ============================================================
 
 def _get_real_capacity_single_box(item: ItemType, box_type: BoxType, probe_resolution: float) -> int:
     """
-    Estimate how many identical items fit in ONE box of box_type by simulation.
-    This is far more reliable than pure tiling math for your SKU use-case.
-
-    probe_resolution should be coarse for speed (e.g., min(item dims)).
+    Estimate how many identical items fit in ONE box of box_type by simulation
+    using the full 3D packer, but only a single box.
     """
     if not _item_can_fit_in_box_type(item, box_type):
         return 0
 
-    # Upper bound by volume (safe)
     max_theoretical = int(box_type.volume // item.volume) if item.volume > 0 else 0
     if max_theoretical <= 0:
         return 0
 
-    # Build dummy items
-    dummies = [ItemType("DUMMY", item.length, item.width, item.height, quantity=1, can_rotate=item.can_rotate)
-               for _ in range(max_theoretical)]
+    dummies = [
+        ItemType("DUMMY", item.length, item.width, item.height, quantity=1, can_rotate=item.can_rotate)
+        for _ in range(max_theoretical)
+    ]
 
-    # Pack using ONLY this box type with max_boxes=1 (exactly one box)
-    one_box_type = BoxType(
+    one_bt = BoxType(
         id="PROBE",
         inner_length=box_type.inner_length,
         inner_width=box_type.inner_width,
@@ -434,7 +435,7 @@ def _get_real_capacity_single_box(item: ItemType, box_type: BoxType, probe_resol
         max_boxes=1,
     )
 
-    boxes, unassigned = pack_order(dummies, [one_box_type], grid_resolution=probe_resolution)
+    boxes, _ = pack_order(dummies, [one_bt], grid_resolution=probe_resolution)
     if not boxes:
         return 0
     return len(boxes[0].items)
@@ -446,14 +447,13 @@ def _plan_mix_single_sku(
     capacities: List[int],
 ) -> Dict[str, int]:
     """
-    Find the best mix (fewest boxes, then cost, then waste volume).
-    Uses DFS with pruning; works well when number of box types is small.
+    Plan box mix for one SKU:
+    minimize (total_boxes, total_cost, total_volume).
     """
     n = len(box_types)
     best_mix: Dict[str, int] = {bt.id: 0 for bt in box_types}
-    best_score = (inf, inf, inf)  # (total_boxes, total_cost, total_volume)
+    best_score = (inf, inf, inf)
 
-    # Sort types by "bigger boxes first" to find low box-count solutions early
     order = sorted(range(n), key=lambda k: -box_types[k].volume)
 
     def evaluate(counts: List[int]) -> Tuple[float, float, float]:
@@ -465,11 +465,9 @@ def _plan_mix_single_sku(
     def dfs(pos: int, counts: List[int], covered: int, used_boxes: int):
         nonlocal best_mix, best_score
 
-        # Prune: already worse in box-count
         if used_boxes > best_score[0]:
             return
 
-        # If covered enough -> candidate solution
         if covered >= quantity:
             score = evaluate(counts)
             if score < best_score:
@@ -489,11 +487,9 @@ def _plan_mix_single_sku(
             return
 
         max_use = bt.max_boxes if bt.max_boxes is not None else quantity
-        # You never need more than ceil(remaining/cap) boxes of this type at this point
         needed = ceil((quantity - covered) / cap)
         limit = min(max_use, needed)
 
-        # Try bigger counts first (find low box-count fast)
         for c in range(limit, -1, -1):
             counts[i] = c
             dfs(pos + 1, counts, covered + c * cap, used_boxes + c)
@@ -510,14 +506,11 @@ def pack_single_sku_order(
 ) -> Tuple[List[BoxInstance], List[ItemType], List[BoxType], Dict[str, int]]:
     """
     Single-SKU flow:
-    1) Compute real capacity per box type (simulation in ONE box each, coarse resolution).
-    2) Plan best mix: fewest boxes, then cost, then waste.
-    3) Run pack_order once with those max_boxes limits.
 
-    Returns:
-    - boxes, unassigned, planned_box_types, mix
+    1) Compute real capacity per box type (one-box simulation).
+    2) Plan best mix (fewest boxes, then cost, then waste volume).
+    3) Call pack_order once with those max_boxes.
     """
-    # Coarse probe resolution so capacity probing is fast even if grid_resolution=0.5
     probe_resolution = min(item.length, item.width, item.height)
 
     capacities = [
@@ -553,9 +546,7 @@ def pack_single_sku_order(
 
 def print_packing_summary(boxes: List[BoxInstance], unassigned_items: List[ItemType]) -> None:
     """
-    Print a compact summary:
-    - For each box: counts of each base item id.
-    - Unassigned items (if any).
+    Print a compact summary of boxes and item counts.
     """
     for b in boxes:
         counter = Counter(it.item_id.split("#")[0] for it in b.items)
@@ -579,7 +570,7 @@ def print_packing_summary(boxes: List[BoxInstance], unassigned_items: List[ItemT
 
 def print_box_stock_usage(box_types: List[BoxType], boxes: List[BoxInstance]) -> None:
     """
-    Print how many boxes of each type were used and how many remain (based on max_boxes).
+    Print how many boxes of each type were used and remaining stock.
     """
     used_counts = Counter(b.box_type.id for b in boxes)
     print("Box stock usage:")

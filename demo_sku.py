@@ -11,11 +11,11 @@ if __name__ == "__main__":
     box_types = [
         BoxType("Pacco-S", 12.5, 10, 26.5, 0.5, max_boxes=100),
         BoxType("Pacco-M", 11, 20, 27, 1.0, max_boxes=100),
-        BoxType("Pacco-XL", 30,   30, 30, 1.0, max_boxes=100),
-        BoxType("Pacco-XXL", 40,   40, 40, 1.0, max_boxes=100),
+        # BoxType("Pacco-XL", 30,   30, 30, 1.0, max_boxes=100),
+        # BoxType("Pacco-XXL", 40,   40, 40, 1.0, max_boxes=100),
     ]
 
-    itemsku = ItemType("MyPOS:Go2", 11, 18.5, 8.5, quantity=50)
+    itemsku = ItemType("CableSep", 10.5, 4, 19, quantity=10)
 
     boxes, unassigned, planned_box_types, mix = pack_single_sku_order(
         itemsku,
