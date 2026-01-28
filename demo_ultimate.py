@@ -40,16 +40,16 @@ if __name__ == "__main__":
         # BoxType("Pacco-XXL", 40, 40, 40, 2.0, max_boxes=3),
     ]
 
-    # Example A: single SKU (will use pack_single_sku_order)
+    # Example A: single SKU (will use pack_single_sku_order())
     # items = [
     #     ItemType("CableSep", 10.5, 4, 19, quantity=10),
     # ]
 
-    # Example B: multi-SKU (uncomment to test multi-SKU logic)
-    # items = [
-    #     ItemType("CableSep", 10.5, 4, 19, quantity=10),
-    #     ItemType("Adapter:Sigma", 8, 9, 20, quantity=5),
-    # ]
+    # Example B: multi-SKU (will use pack_order())
+    items = [
+        ItemType("CableSep", 10.5, 4, 19, quantity=10),
+        ItemType("Adapter:Sigma", 8, 9, 20, quantity=5),
+    ]
 
     boxes, unassigned, used_box_types = smart_pack(items, box_types, grid_resolution=0.5)
 
