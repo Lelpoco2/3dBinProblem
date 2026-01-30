@@ -34,22 +34,22 @@ def smart_pack(items, box_types, grid_resolution=0.5):
 
 if __name__ == "__main__":
     box_types = [
-        BoxType("Pacco-S", 12.5, 10, 26.5, 0.5, max_boxes=5),
-        BoxType("Pacco-M", 11, 20, 27, 1.0, max_boxes=5),
-        # BoxType("Pacco-XL", 30, 30, 30, 1.5, max_boxes=3),
+        # BoxType("Pacco-S", 12.5, 10, 26.5, 0.5, max_boxes=5),
+        # BoxType("Pacco-M", 11, 20, 27, 1.0, max_boxes=5),
+        BoxType("Pacco-XL-Special", (11*3), (18.5*2), (8.5*5), 1.5, max_boxes=30),
         # BoxType("Pacco-XXL", 40, 40, 40, 2.0, max_boxes=3),
     ]
 
     # Example A: single SKU (will use pack_single_sku_order())
-    # items = [
-    #     ItemType("CableSep", 10.5, 4, 19, quantity=10),
-    # ]
+    items = [
+        ItemType("Item1", 11, 18.5, 8.5, quantity=250),
+    ]
 
     # Example B: multi-SKU (will use pack_order())
-    items = [
-        ItemType("CableSep", 10.5, 4, 19, quantity=10),
-        ItemType("Adapter:Sigma", 8, 9, 20, quantity=5),
-    ]
+    # items = [
+    #     ItemType("CableSep", 10.5, 4, 19, quantity=10),
+    #     ItemType("Adapter:Sigma", 8, 9, 20, quantity=5),
+    # ]
 
     boxes, unassigned, used_box_types = smart_pack(items, box_types, grid_resolution=0.5)
 
