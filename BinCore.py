@@ -12,7 +12,7 @@ Heuristic:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import List, Tuple, Optional, Dict
+from typing import List, Tuple, Optional, Dict, Literal
 import itertools
 from collections import Counter
 from math import inf, ceil
@@ -57,6 +57,10 @@ class BoxType:
         instead of the calculated volume (length * width * height).
         Useful for irregular boxes or when actual usable volume differs
         from geometric volume.
+        
+    container_type:
+        Type of container: "BOX" (rigid) or "BAG" (flexible).
+        BAG type requires effective_volume to be set.
     """
     id: str
     inner_length: float
@@ -65,6 +69,15 @@ class BoxType:
     cost: float
     max_boxes: Optional[int] = None
     effective_volume: Optional[float] = None
+    container_type: Literal["BOX", "BAG"] = "BOX"
+    
+    def __post_init__(self):
+        """Validate that BAG containers have effective_volume set."""
+        if self.container_type == "BAG" and self.effective_volume is None:
+            raise ValueError(
+                f"BoxType '{self.id}': BAG containers must have effective_volume specified. "
+                f"Please provide effective_volume parameter in the constructor."
+            )
 
     @property
     def volume(self) -> float:
@@ -450,6 +463,7 @@ def _get_real_capacity_single_box(item: ItemType, box_type: BoxType, probe_resol
         cost=0.0,
         max_boxes=1,
         effective_volume=box_type.effective_volume,
+        container_type=box_type.container_type,
     )
 
     boxes, _ = pack_order(dummies, [one_bt], grid_resolution=probe_resolution)
@@ -551,6 +565,7 @@ def pack_single_sku_order(
                 cost=bt.cost,
                 max_boxes=planned_max,
                 effective_volume=bt.effective_volume,
+                container_type=bt.container_type,
             )
         )
 
