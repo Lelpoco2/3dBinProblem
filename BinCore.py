@@ -51,6 +51,12 @@ class BoxType:
 
     cost:
         Economic cost of using one box of this type.
+    
+    effective_volume:
+        Optional custom volume value. If set, this value will be used
+        instead of the calculated volume (length * width * height).
+        Useful for irregular boxes or when actual usable volume differs
+        from geometric volume.
     """
     id: str
     inner_length: float
@@ -58,9 +64,12 @@ class BoxType:
     inner_height: float
     cost: float
     max_boxes: Optional[int] = None
+    effective_volume: Optional[float] = None
 
     @property
     def volume(self) -> float:
+        if self.effective_volume is not None:
+            return self.effective_volume
         return self.inner_length * self.inner_width * self.inner_height
 
 
@@ -276,6 +285,13 @@ def _try_place_item_in_box(box: BoxInstance, item: ItemType, grid_resolution: fl
     of that orientation can fit in an empty box (capacity), then by fill.
     This fixes the "flat vs vertical" orientation issue.
     """
+    # Check if adding this item would exceed effective volume limit
+    if box.box_type.effective_volume is not None:
+        current_volume = box.used_volume()
+        item_volume = item.volume
+        if current_volume + item_volume > box.box_type.effective_volume:
+            return False
+    
     oris = orientations_of(item) if item.can_rotate else [(item.length, item.width, item.height)]
 
     def orientation_score(dims):
@@ -433,6 +449,7 @@ def _get_real_capacity_single_box(item: ItemType, box_type: BoxType, probe_resol
         inner_height=box_type.inner_height,
         cost=0.0,
         max_boxes=1,
+        effective_volume=box_type.effective_volume,
     )
 
     boxes, _ = pack_order(dummies, [one_bt], grid_resolution=probe_resolution)
@@ -533,6 +550,7 @@ def pack_single_sku_order(
                 inner_height=bt.inner_height,
                 cost=bt.cost,
                 max_boxes=planned_max,
+                effective_volume=bt.effective_volume,
             )
         )
 

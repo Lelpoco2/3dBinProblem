@@ -36,13 +36,14 @@ if __name__ == "__main__":
     box_types = [
         # BoxType("Pacco-S", 12.5, 10, 26.5, 0.5, max_boxes=5),
         # BoxType("Pacco-M", 11, 20, 27, 1.0, max_boxes=5),
-        BoxType("Pacco-XL-Special", (11*3), (18.5*2), (8.5*5), 1.5, max_boxes=30),
+        # BoxType("Pacco-XL-Special", (11*3), (18.5*2), (8.5*5), 1.5, max_boxes=30),
         # BoxType("Pacco-XXL", 40, 40, 40, 2.0, max_boxes=3),
+        BoxType("Pacco-Soft", 30, 20, 10, 1.5, max_boxes=5, effective_volume=1800)
     ]
 
     # Example A: single SKU (will use pack_single_sku_order())
     items = [
-        ItemType("Item1", 11, 18.5, 8.5, quantity=250),
+        ItemType("Item1", 11, 18.5, 8.5, quantity=5),
     ]
 
     # Example B: multi-SKU (will use pack_order())
