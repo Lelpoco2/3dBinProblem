@@ -34,16 +34,16 @@ def smart_pack(items, box_types, grid_resolution=0.5):
 
 if __name__ == "__main__":
     box_types = [
-        # BoxType("Pacco-S", 12.5, 10, 26.5, 0.5, max_boxes=5),
-        # BoxType("Pacco-M", 11, 20, 27, 1.0, max_boxes=5),
+        # BoxType(id="BOX001", name="Pacco-S", inner_length=12.5, inner_width=10, inner_height=26.5, cost=0.5, max_boxes=5, container_type="BOX"),
+        # BoxType(id="BOX002", name="Pacco-M", inner_length=11, inner_width=20, inner_height=27, cost=1.0, max_boxes=5, container_type="BOX"),
         # BoxType("Pacco-XL-Special", (11*3), (18.5*2), (8.5*5), 1.5, max_boxes=30),
         # BoxType("Pacco-XXL", 40, 40, 40, 2.0, max_boxes=3),
-        BoxType("Pacco-Soft", 30, 20, 10, 1.5, max_boxes=5, effective_volume=1800, container_type="BAG")
+        BoxType(id="BAG001", name="Pacco-Soft-M", inner_length=30, inner_width=20, inner_height=10, cost=1.5, max_boxes=5, effective_volume=1800, container_type="BAG")
     ]
 
     # Example A: single SKU (will use pack_single_sku_order())
     items = [
-        ItemType("Item1", 11, 18.5, 8.5, quantity=5),
+        ItemType(id="ITEM001", name="MyPos:Go2", length=11, width=18.5, height=8.5, quantity=1),
     ]
 
     # Example B: multi-SKU (will use pack_order())

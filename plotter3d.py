@@ -105,8 +105,7 @@ def draw_item(ax, position, dims, label: str,
     ty = y0 + w / 2.0
     tz = z0 + h
 
-    base_label = label.split("#")[0]
-    ax.text(tx, ty, tz + 0.5, base_label,
+    ax.text(tx, ty, tz + 0.5, label,
             ha='center', va='bottom', fontsize=8, color='black')
 
 
@@ -115,15 +114,15 @@ def _box_summary_text(box_instance: BoxInstance) -> str:
     Multi-line text summary for a single box.
     """
     bt = box_instance.box_type
-    counter = Counter(it.item_id.split("#")[0] for it in box_instance.items)
+    counter = Counter(it.item_name for it in box_instance.items)
 
     lines = []
-    lines.append(f"Box {bt.id}-{box_instance.instance_index}")
+    lines.append(f"Box: {bt.name}-{box_instance.instance_index}")
     lines.append(f"Size: {bt.inner_length}x{bt.inner_width}x{bt.inner_height}")
     lines.append("Items:")
     if counter:
-        for item_id, qty in counter.items():
-            lines.append(f"  - {item_id}: {qty}")
+        for item_name, qty in counter.items():
+            lines.append(f"  - {item_name}: {qty}")
     else:
         lines.append("  (empty)")
     return "\n".join(lines)
@@ -136,10 +135,10 @@ def _unassigned_summary_text(unassigned_items: List[ItemType]) -> str:
     if not unassigned_items:
         return "Unpacked items:\n  (none)"
 
-    counter = Counter(it.id.split("#")[0] for it in unassigned_items)
+    counter = Counter(it.name for it in unassigned_items)
     lines = ["Unpacked items:"]
-    for item_id, qty in counter.items():
-        lines.append(f"  - {item_id}: {qty}")
+    for item_name, qty in counter.items():
+        lines.append(f"  - {item_name}: {qty}")
     return "\n".join(lines)
 
 
@@ -182,7 +181,7 @@ def visualize_boxes_with_buttons(
 
         for idx, it in enumerate(box_instance.items):
             color = colors[idx % len(colors)]
-            draw_item(ax, it.position, it.rotation, it.item_id,
+            draw_item(ax, it.position, it.rotation, it.item_name,
                       color=color, alpha=0.6)
 
         ax.set_xlim(0, L)
@@ -191,7 +190,7 @@ def visualize_boxes_with_buttons(
         ax.set_xlabel("X (length)")
         ax.set_ylabel("Y (width)")
         ax.set_zlabel("Z (height)")
-        ax.set_title(f"Box {box_instance.box_type.id}-{box_instance.instance_index} "
+        ax.set_title(f"Box: {box_instance.box_type.id}-{box_instance.instance_index} "
                      f"({state['i']+1}/{len(boxes)})")
         
         # Set equal scaling

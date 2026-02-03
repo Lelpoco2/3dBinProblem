@@ -27,6 +27,13 @@ class ItemType:
     """
     Represents a type of item to pack.
     Geometry-only; weight is ignored.
+    
+    id:
+        Internal identifier for the item type.
+    
+    name:
+        Human-readable name for display purposes.
+        If not provided, defaults to the id.
     """
     id: str
     length: float
@@ -34,6 +41,12 @@ class ItemType:
     height: float
     quantity: int = 0
     can_rotate: bool = True
+    name: Optional[str] = None
+    
+    def __post_init__(self):
+        """Set name to id if not provided."""
+        if self.name is None:
+            self.name = self.id
 
     @property
     def volume(self) -> float:
@@ -44,6 +57,13 @@ class ItemType:
 class BoxType:
     """
     Represents a type of box that can be used.
+    
+    id:
+        Internal identifier for the box type.
+    
+    name:
+        Human-readable name for display purposes.
+        If not provided, defaults to the id.
 
     max_boxes:
         Maximum number of boxes of this type that can be used.
@@ -70,12 +90,18 @@ class BoxType:
     max_boxes: Optional[int] = None
     effective_volume: Optional[float] = None
     container_type: Literal["BOX", "BAG"] = "BOX"
+    name: Optional[str] = None
     
     def __post_init__(self):
-        """Validate that BAG containers have effective_volume set."""
+        """Validate and set defaults."""
+        # Set name to id if not provided
+        if self.name is None:
+            self.name = self.id
+        
+        # Validate BAG containers
         if self.container_type == "BAG" and self.effective_volume is None:
             raise ValueError(
-                f"BoxType '{self.id}': BAG containers must have effective_volume specified. "
+                f"BoxType '{self.name}': BAG containers must have effective_volume specified. "
                 f"Please provide effective_volume parameter in the constructor."
             )
 
@@ -98,6 +124,7 @@ class PlacedItem:
     height: float
     position: Tuple[float, float, float]   # (x, y, z)
     rotation: Tuple[float, float, float]   # (L, W, H) after rotation
+    item_name: str = ""  # Human-readable name for display
 
 
 @dataclass
@@ -268,6 +295,7 @@ def _expand_items(items: List[ItemType]) -> List[ItemType]:
                     height=it.height,
                     quantity=1,
                     can_rotate=it.can_rotate,
+                    name=it.name,
                 )
             )
     return expanded
@@ -335,6 +363,7 @@ def _try_place_item_in_box(box: BoxInstance, item: ItemType, grid_resolution: fl
                 height=item.height,
                 position=pos,
                 rotation=dims,
+                item_name=item.name,
             )
         )
         return True
@@ -451,7 +480,7 @@ def _get_real_capacity_single_box(item: ItemType, box_type: BoxType, probe_resol
         return 0
 
     dummies = [
-        ItemType("DUMMY", item.length, item.width, item.height, quantity=1, can_rotate=item.can_rotate)
+        ItemType("DUMMY", item.length, item.width, item.height, quantity=1, can_rotate=item.can_rotate, name="DUMMY")
         for _ in range(max_theoretical)
     ]
 
@@ -464,6 +493,7 @@ def _get_real_capacity_single_box(item: ItemType, box_type: BoxType, probe_resol
         max_boxes=1,
         effective_volume=box_type.effective_volume,
         container_type=box_type.container_type,
+        name="PROBE",
     )
 
     boxes, _ = pack_order(dummies, [one_bt], grid_resolution=probe_resolution)
@@ -566,6 +596,7 @@ def pack_single_sku_order(
                 max_boxes=planned_max,
                 effective_volume=bt.effective_volume,
                 container_type=bt.container_type,
+                name=bt.name,
             )
         )
 
@@ -584,7 +615,7 @@ def print_packing_summary(boxes: List[BoxInstance], unassigned_items: List[ItemT
     for b in boxes:
         counter = Counter(it.item_id.split("#")[0] for it in b.items)
         util = (b.used_volume() / b.box_type.volume * 100) if b.box_type.volume > 0 else 0.0
-        print(f"Box {b.box_type.id}-{b.instance_index}")
+        print(f"Box {b.box_type.name}-{b.instance_index}")
         print(f" Box size: {b.box_type.inner_length}x{b.box_type.inner_width}x{b.box_type.inner_height}")
         print(f" Volume utilization: {util:.1f}%")
         print(" Items:")
@@ -610,8 +641,8 @@ def print_box_stock_usage(box_types: List[BoxType], boxes: List[BoxInstance]) ->
     for bt in box_types:
         used = used_counts.get(bt.id, 0)
         if bt.max_boxes is None:
-            print(f" - {bt.id}: used {used}, remaining: unlimited")
+            print(f" - {bt.name}: used {used}, remaining: unlimited")
         else:
             remaining = max(bt.max_boxes - used, 0)
-            print(f" - {bt.id}: used {used}, remaining: {remaining} (of {bt.max_boxes})")
+            print(f" - {bt.name}: used {used}, remaining: {remaining} (of {bt.max_boxes})")
     print()
