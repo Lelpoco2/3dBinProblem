@@ -421,10 +421,18 @@ def pack_order(
 
         def score(bt: BoxType):
             if bt.volume <= 0:
-                return (inf, inf, inf, inf)
+                return (inf, inf, inf)
             approx_boxes_needed = ceil(pile_vol / bt.volume)
-            waste = approx_boxes_needed * bt.volume - pile_vol
-            return (approx_boxes_needed, waste, bt.cost, bt.volume)
+            total_volume = approx_boxes_needed * bt.volume
+            waste_ratio = 1 - (pile_vol / total_volume) if total_volume > 0 else 1.0
+            total_cost = approx_boxes_needed * bt.cost
+            waste_volume = total_volume - pile_vol
+            # Cubic penalty on waste inflates the effective box count
+            # so that an oversized box (e.g. 88 % empty) ranks worse
+            # than multiple well-sized boxes with moderate waste.
+            waste_penalty = 1 + 3 * waste_ratio ** 3
+            effective_boxes = approx_boxes_needed * waste_penalty
+            return (effective_boxes, total_cost, waste_volume)
 
         candidates.sort(key=score)
         chosen = candidates[0]
@@ -459,6 +467,9 @@ def pack_order(
 
         if not _try_place_item_in_box(new_box, item, grid_resolution):
             unassigned.append(item)
+
+    # Remove empty boxes (can happen if placement fails after opening)
+    boxes = [b for b in boxes if b.items]
 
     return boxes, unassigned
 
