@@ -72,6 +72,98 @@ Adjust the call signatures to match the functions in `BinCore.py` (the demos sho
 - Improving the packing heuristics (e.g., better item ordering, more complex placement strategies).
 - Adding FastAPI endpoints for web-based interaction.
 
+## dbin_api (FastAPI wrapper)
+
+The `dbin_api` package is a refactored FastAPI-based wrapper around the original packing engine. It exposes the packing functionality over HTTP and provides modular code for the core algorithms.
+
+Key files in `dbin_api/`:
+- `dbin_api/models.py` — dataclasses for the core packing engine and Pydantic request/response models.
+- `dbin_api/packing.py` — core packing algorithm (geometry helpers, multi-SKU packer, single-SKU planner).
+- `dbin_api/api.py` — FastAPI application exposing HTTP endpoints.
+- `dbin_api/test_packing.py` — example pytest tests including API endpoint checks.
+
+Available endpoints
+- `GET /` — Service info (name and version).
+- `GET /health` — Health check.
+- `POST /pack` — Multi-SKU packer.
+  - Request JSON: `{ "items": [...], "box_types": [...], "grid_resolution": 1.0 }`
+  - Returns: `PackingResult` (boxes with placed items, unassigned items, summary).
+- `POST /pack/single-sku` — Single-SKU planner + packer.
+  - Request JSON: `{ "item": {...}, "box_types": [...], "grid_resolution": 1.0 }`
+  - Returns: packing result plus planned box mix and summary.
+
+Schemas
+- `ItemCreate` — item input (id, length, width, height, quantity, can_rotate, name).
+- `BoxTypeCreate` — box input (id, inner_length, inner_width, inner_height, cost, max_boxes, effective_volume, container_type, name).
+- `PackingResult` — response that includes `boxes` (with placed items) and `unassigned_items`.
+
+Running the API locally
+1. Install dependencies (recommended):
+```bash
+python -m pip install fastapi uvicorn pydantic pytest
+# plus optional plotting/test deps:
+python -m pip install numpy matplotlib
+```
+
+2. Start the server from the project root:
+```bash
+uvicorn dbin_api.api:app --reload --host 127.0.0.1 --port 8000
+```
+
+3. Open the interactive API docs:
+- Swagger UI: http://127.0.0.1:8000/docs
+- ReDoc: http://127.0.0.1:8000/redoc
+
+Examples
+
+Multi-SKU pack (POST /pack) — request body:
+```json
+{
+  "items": [
+    { "id": "SKU-1", "length": 4.0, "width": 3.0, "height": 2.0, "quantity": 2, "can_rotate": true, "name": "A" },
+    { "id": "SKU-2", "length": 6.0, "width": 5.0, "height": 2.0, "quantity": 1, "can_rotate": true, "name": "B" }
+  ],
+  "box_types": [
+    { "id": "BOX-1", "inner_length": 20.0, "inner_width": 15.0, "inner_height": 10.0, "cost": 1.0, "max_boxes": null, "effective_volume": null, "container_type": "BOX", "name": "StandardBox" }
+  ],
+  "grid_resolution": 1.0
+}
+```
+
+Single-SKU pack (POST /pack/single-sku) — request body:
+```json
+{
+  "item": { "id": "SKU-X", "length": 4.0, "width": 3.0, "height": 2.0, "quantity": 6, "can_rotate": true, "name": "X" },
+  "box_types": [
+    { "id": "BOX-1", "inner_length": 20.0, "inner_width": 15.0, "inner_height": 10.0, "cost": 1.0, "max_boxes": null, "effective_volume": null, "container_type": "BOX", "name": "StandardBox" }
+  ],
+  "grid_resolution": 1.0
+}
+```
+
+Curl example
+```bash
+curl -sS -X POST http://127.0.0.1:8000/pack \
+  -H 'Content-Type: application/json' \
+  -d @- <<'JSON'
+{
+  "items": [{ "id": "SKU-1", "length": 4, "width": 3, "height": 2, "quantity": 2 }],
+  "box_types": [{ "id": "BOX-1", "inner_length": 20, "inner_width": 15, "inner_height": 10, "cost": 1.0 }],
+  "grid_resolution": 1.0
+}
+JSON
+```
+
+Testing
+- Unit tests and API tests live in `dbin_api/test_packing.py`.
+- Run tests:
+```bash
+pytest -q
+```
+
+Notes
+- The FastAPI wrapper exposes the geometry-only packer for experimentation and integration. For production use you may want to add authentication, request rate limits, background job handling for long runs, and stronger input validation depending on your use case.
+
 ## License
 
 This project is licensed under the MIT License. See the `LICENSE` file for details.
