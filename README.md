@@ -69,8 +69,8 @@ Adjust the call signatures to match the functions in `BinCore.py` (the demos sho
 - Performance for large inputs is not optimized; consider more advanced bin-packing libraries or integer programming for heavy workloads.
 
 ## TODOs
-- Improving the packing heuristics (e.g., better item ordering, more complex placement strategies).
-- Adding FastAPI endpoints for web-based interaction.
+- [ ] Improving the packing heuristics (e.g., better item ordering, more complex placement strategies).
+- [x] Adding FastAPI endpoints for web-based interaction.
 
 ## dbin_api (FastAPI wrapper)
 
@@ -100,9 +100,7 @@ Schemas
 Running the API locally
 1. Install dependencies (recommended):
 ```bash
-python -m pip install fastapi uvicorn pydantic pytest
-# plus optional plotting/test deps:
-python -m pip install numpy matplotlib
+python -m pip install requirements.txt
 ```
 
 2. Start the server from the project root:
