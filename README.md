@@ -68,6 +68,10 @@ Adjust the call signatures to match the functions in `BinCore.py` (the demos sho
 - This repo provides an educational and experimental implementation rather than a production-grade solver.
 - Performance for large inputs is not optimized; consider more advanced bin-packing libraries or integer programming for heavy workloads.
 
+## TODOs
+- Improving the packing heuristics (e.g., better item ordering, more complex placement strategies).
+- Adding FastAPI endpoints for web-based interaction.
+
 ## License
 
 This project is licensed under the MIT License. See the `LICENSE` file for details.
