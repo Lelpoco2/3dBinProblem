@@ -1,11 +1,11 @@
-from BinCore import (
+from dbin_local.BinCore import (
     ItemType,
     BoxType,
     pack_order,
     print_packing_summary,
     print_box_stock_usage,
 )
-from plotter3d import visualize_boxes_with_buttons
+from dbin_local.plotter3d import visualize_boxes_with_buttons
 
 if __name__ == "__main__":
     # Define available box types
