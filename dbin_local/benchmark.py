@@ -65,23 +65,23 @@ def _run_scenario_once(scenario: dict) -> dict:
 
 
 def _run_benchmark(scenario: dict, repetitions: int = REPETITIONS) -> dict:
-    times = []
+    if repetitions < 1:
+        raise ValueError(f"repetitions must be >= 1, got {repetitions}")
+    times_rounded = []
     result = None
     for _ in range(repetitions):
         t0 = time.perf_counter()
         result = _run_scenario_once(scenario)
         t1 = time.perf_counter()
-        times.append(t1 - t0)
-    times_rounded = [round(t, 6) for t in times]
-    avg_exact = sum(times_rounded) / len(times_rounded)
+        times_rounded.append(round(t1 - t0, 6))
     return {
         "name": scenario["name"],
         "mode": result["mode"],
         "repetitions": repetitions,
         "times_s": times_rounded,
-        "min_s": round(min(times), 6),
-        "max_s": round(max(times), 6),
-        "avg_s": avg_exact,
+        "min_s": min(times_rounded),
+        "max_s": max(times_rounded),
+        "avg_s": sum(times_rounded) / len(times_rounded),
         "total_boxes": result["total_boxes"],
         "box_breakdown": result["box_breakdown"],
         "unassigned_items": result["unassigned_items"],

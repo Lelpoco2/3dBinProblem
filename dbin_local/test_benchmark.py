@@ -3,8 +3,11 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
+import pytest
+
 from benchmark import (
     _run_scenario_once,
+    _run_benchmark,
     _BOX_S, _BOX_M, _BOXES_SM,
 )
 from BinCore import ItemType
@@ -66,9 +69,6 @@ def test_run_scenario_once_with_unassigned():
     assert result["total_boxes"] == 0
 
 
-from benchmark import _run_benchmark
-
-
 def test_run_benchmark_shape():
     result = _run_benchmark(_tiny_scenario(), repetitions=2)
     for key in ("name", "mode", "repetitions", "times_s", "min_s", "max_s", "avg_s",
@@ -93,3 +93,8 @@ def test_run_benchmark_stats_consistent():
 def test_run_benchmark_times_positive():
     result = _run_benchmark(_tiny_scenario(), repetitions=2)
     assert all(t > 0 for t in result["times_s"])
+
+
+def test_run_benchmark_zero_repetitions_raises():
+    with pytest.raises(ValueError, match="repetitions"):
+        _run_benchmark(_tiny_scenario(), repetitions=0)
