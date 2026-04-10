@@ -143,3 +143,123 @@ def _write_json(results: list, timestamp: str) -> None:
     all_runs.append({"run_timestamp": timestamp, "scenarios": results})
     with json_path.open("w", encoding="utf-8") as f:
         json.dump(all_runs, f, indent=2)
+
+
+# ---------------------------------------------------------------------------
+# Output — console
+# ---------------------------------------------------------------------------
+
+def _print_results(results: list, box_ids: list, timestamp: str) -> None:
+    box_headers = "  ".join(f"{bid:>7}" for bid in box_ids)
+    header = (
+        f"{'Scenario':<22} | {'Mode':<10} | {'Reps':>4} | "
+        f"{'Min(s)':>8} | {'Max(s)':>8} | {'Avg(s)':>8} | "
+        f"{'Boxes':>5}  {box_headers}  {'Unassigned':>10}"
+    )
+    sep = "-" * len(header)
+    print(f"\n=== 3D Bin Packing Benchmark — {timestamp} ===\n")
+    print(header)
+    print(sep)
+    for r in results:
+        box_counts = "  ".join(
+            f"{r['box_breakdown'].get(bid, 0):>7}" for bid in box_ids
+        )
+        print(
+            f"{r['name']:<22} | {r['mode']:<10} | {r['repetitions']:>4} | "
+            f"{r['min_s']:>8.4f} | {r['max_s']:>8.4f} | {r['avg_s']:>8.4f} | "
+            f"{r['total_boxes']:>5}  {box_counts}  {r['unassigned_items']:>10}"
+        )
+    print(f"\nResults saved to: {RESULTS_DIR}/")
+
+
+# ---------------------------------------------------------------------------
+# Scenarios
+# ---------------------------------------------------------------------------
+
+SCENARIOS = [
+    {
+        "name": "single_sku_tiny",
+        "items": [ItemType("SKU_A", 5, 4, 3, quantity=3, name="Gadget-S")],
+        "box_types": _BOXES_SM,
+    },
+    {
+        "name": "single_sku_medium",
+        "items": [ItemType("SKU_A", 5, 4, 3, quantity=20, name="Gadget-S")],
+        "box_types": _BOXES_SML,
+    },
+    {
+        "name": "multi_sku_small",
+        "items": [
+            ItemType("SKU_A", 5, 4, 3, quantity=2, name="Gadget-A"),
+            ItemType("SKU_B", 8, 6, 4, quantity=2, name="Gadget-B"),
+            ItemType("SKU_C", 12, 10, 8, quantity=2, name="Gadget-C"),
+            ItemType("SKU_D", 6, 5, 4, quantity=2, name="Gadget-D"),
+        ],
+        "box_types": _BOXES_SML,
+    },
+    {
+        "name": "multi_sku_stress",
+        "items": [
+            ItemType("SKU_A", 5, 4, 3, quantity=5, name="Gadget-A"),
+            ItemType("SKU_B", 8, 6, 4, quantity=4, name="Gadget-B"),
+            ItemType("SKU_C", 12, 10, 8, quantity=3, name="Gadget-C"),
+            ItemType("SKU_D", 6, 5, 4, quantity=4, name="Gadget-D"),
+            ItemType("SKU_E", 9, 7, 5, quantity=3, name="Gadget-E"),
+            ItemType("SKU_F", 14, 11, 9, quantity=3, name="Gadget-F"),
+            ItemType("SKU_G", 4, 3, 2, quantity=5, name="Gadget-G"),
+            ItemType("SKU_H", 7, 6, 3, quantity=4, name="Gadget-H"),
+        ],
+        "box_types": _BOXES_SML,
+    },
+    {
+        "name": "single_sku_large",
+        "items": [ItemType("SKU_A", 5, 4, 3, quantity=50, name="Gadget-S")],
+        "box_types": _BOXES_SML,
+    },
+    {
+        "name": "single_sku_100",
+        "items": [ItemType("SKU_A", 5, 4, 3, quantity=100, name="Gadget-S")],
+        "box_types": _BOXES_SML,
+    },
+    {
+        "name": "multi_sku_100",
+        "items": [
+            ItemType("SKU_A", 5, 4, 3, quantity=10, name="Item-A"),
+            ItemType("SKU_B", 8, 6, 4, quantity=10, name="Item-B"),
+            ItemType("SKU_C", 6, 5, 4, quantity=10, name="Item-C"),
+            ItemType("SKU_D", 4, 3, 2, quantity=10, name="Item-D"),
+            ItemType("SKU_E", 9, 7, 5, quantity=10, name="Item-E"),
+            ItemType("SKU_F", 7, 6, 3, quantity=10, name="Item-F"),
+            ItemType("SKU_G", 3, 3, 3, quantity=10, name="Item-G"),
+            ItemType("SKU_H", 10, 8, 6, quantity=10, name="Item-H"),
+            ItemType("SKU_I", 5, 5, 5, quantity=10, name="Item-I"),
+            ItemType("SKU_J", 6, 4, 3, quantity=10, name="Item-J"),
+        ],
+        "box_types": _BOXES_SML,
+    },
+]
+
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
+def main() -> None:
+    timestamp = datetime.now().isoformat(timespec="seconds")
+    print("Running benchmarks, please wait...")
+    results = [_run_benchmark(s) for s in SCENARIOS]
+
+    # Collect unique box IDs preserving insertion order
+    seen: dict = {}
+    for s in SCENARIOS:
+        for bt in s["box_types"]:
+            seen[bt.id] = True
+    box_ids = list(seen.keys())
+
+    _print_results(results, box_ids, timestamp)
+    _write_csv(results, timestamp)
+    _write_json(results, timestamp)
+
+
+if __name__ == "__main__":
+    main()
