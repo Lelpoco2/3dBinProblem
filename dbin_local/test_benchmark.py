@@ -184,3 +184,13 @@ def test_write_json_appends_runs(tmp_path):
     with json_path.open() as f:
         data = json.load(f)
     assert len(data) == 2
+
+
+def test_write_json_corrupted_file_recovers(tmp_path):
+    json_path = tmp_path / "benchmark_results.json"
+    json_path.write_text("{ invalid json }", encoding="utf-8")
+    with patch("benchmark.RESULTS_DIR", tmp_path):
+        _write_json(_sample_results(), "2026-04-10T10:00:00")
+    data = json.loads(json_path.read_text(encoding="utf-8"))
+    assert len(data) == 1
+    assert data[0]["scenarios"][0]["name"] == "test_scenario"

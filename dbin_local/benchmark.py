@@ -100,13 +100,13 @@ def _write_csv(results: list, timestamp: str) -> None:
         "min_s", "max_s", "avg_s",
         "total_boxes", "box_breakdown", "unassigned_items",
     ]
-    write_header = not csv_path.exists()
+    write_header = not csv_path.exists() or csv_path.stat().st_size == 0
     with csv_path.open("a", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         if write_header:
             writer.writeheader()
         for r in results:
-            breakdown_str = ",".join(f"{k}:{v}" for k, v in r["box_breakdown"].items())
+            breakdown_str = ",".join(f"{k}:{v}" for k, v in sorted(r["box_breakdown"].items()))
             writer.writerow({
                 "timestamp": timestamp,
                 "scenario": r["name"],
@@ -128,9 +128,16 @@ def _write_csv(results: list, timestamp: str) -> None:
 def _write_json(results: list, timestamp: str) -> None:
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     json_path = RESULTS_DIR / "benchmark_results.json"
+    # NOTE: read-then-write pattern has a narrow data-loss window on crash between
+    # the two opens. Acceptable for a local benchmark tool.
     if json_path.exists():
-        with json_path.open("r", encoding="utf-8") as f:
-            all_runs = json.load(f)
+        try:
+            with json_path.open("r", encoding="utf-8") as f:
+                all_runs = json.load(f)
+            if not isinstance(all_runs, list):
+                all_runs = []
+        except json.JSONDecodeError:
+            all_runs = []  # file corrotto: si riparte da zero
     else:
         all_runs = []
     all_runs.append({"run_timestamp": timestamp, "scenarios": results})
