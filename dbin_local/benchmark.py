@@ -86,3 +86,53 @@ def _run_benchmark(scenario: dict, repetitions: int = REPETITIONS) -> dict:
         "box_breakdown": result["box_breakdown"],
         "unassigned_items": result["unassigned_items"],
     }
+
+
+# ---------------------------------------------------------------------------
+# Output — CSV
+# ---------------------------------------------------------------------------
+
+def _write_csv(results: list, timestamp: str) -> None:
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    csv_path = RESULTS_DIR / "benchmark_results.csv"
+    fieldnames = [
+        "timestamp", "scenario", "mode", "repetitions",
+        "min_s", "max_s", "avg_s",
+        "total_boxes", "box_breakdown", "unassigned_items",
+    ]
+    write_header = not csv_path.exists()
+    with csv_path.open("a", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        if write_header:
+            writer.writeheader()
+        for r in results:
+            breakdown_str = ",".join(f"{k}:{v}" for k, v in r["box_breakdown"].items())
+            writer.writerow({
+                "timestamp": timestamp,
+                "scenario": r["name"],
+                "mode": r["mode"],
+                "repetitions": r["repetitions"],
+                "min_s": r["min_s"],
+                "max_s": r["max_s"],
+                "avg_s": r["avg_s"],
+                "total_boxes": r["total_boxes"],
+                "box_breakdown": breakdown_str,
+                "unassigned_items": r["unassigned_items"],
+            })
+
+
+# ---------------------------------------------------------------------------
+# Output — JSON
+# ---------------------------------------------------------------------------
+
+def _write_json(results: list, timestamp: str) -> None:
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    json_path = RESULTS_DIR / "benchmark_results.json"
+    if json_path.exists():
+        with json_path.open("r", encoding="utf-8") as f:
+            all_runs = json.load(f)
+    else:
+        all_runs = []
+    all_runs.append({"run_timestamp": timestamp, "scenarios": results})
+    with json_path.open("w", encoding="utf-8") as f:
+        json.dump(all_runs, f, indent=2)

@@ -3,11 +3,17 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
+import csv as csv_module
+import json
+from unittest.mock import patch
+
 import pytest
 
 from benchmark import (
     _run_scenario_once,
     _run_benchmark,
+    _write_csv,
+    _write_json,
     _BOX_S, _BOX_M, _BOXES_SM,
 )
 from BinCore import ItemType
@@ -98,3 +104,83 @@ def test_run_benchmark_times_positive():
 def test_run_benchmark_zero_repetitions_raises():
     with pytest.raises(ValueError, match="repetitions"):
         _run_benchmark(_tiny_scenario(), repetitions=0)
+
+
+def _sample_results():
+    return [
+        {
+            "name": "test_scenario",
+            "mode": "single-SKU",
+            "repetitions": 2,
+            "times_s": [0.01, 0.02],
+            "min_s": 0.01,
+            "max_s": 0.02,
+            "avg_s": 0.015,
+            "total_boxes": 1,
+            "box_breakdown": {"BOX_S": 1, "BOX_M": 0},
+            "unassigned_items": 0,
+        }
+    ]
+
+
+def test_write_csv_creates_file(tmp_path):
+    with patch("benchmark.RESULTS_DIR", tmp_path):
+        _write_csv(_sample_results(), "2026-04-10T10:00:00")
+    csv_path = tmp_path / "benchmark_results.csv"
+    assert csv_path.exists()
+
+
+def test_write_csv_header_and_row(tmp_path):
+    with patch("benchmark.RESULTS_DIR", tmp_path):
+        _write_csv(_sample_results(), "2026-04-10T10:00:00")
+    csv_path = tmp_path / "benchmark_results.csv"
+    with csv_path.open() as f:
+        reader = csv_module.DictReader(f)
+        rows = list(reader)
+    assert len(rows) == 1
+    assert rows[0]["scenario"] == "test_scenario"
+    assert rows[0]["mode"] == "single-SKU"
+    assert "BOX_S:1" in rows[0]["box_breakdown"]
+
+
+def test_write_csv_appends(tmp_path):
+    with patch("benchmark.RESULTS_DIR", tmp_path):
+        _write_csv(_sample_results(), "2026-04-10T10:00:00")
+        _write_csv(_sample_results(), "2026-04-10T10:01:00")
+    csv_path = tmp_path / "benchmark_results.csv"
+    with csv_path.open() as f:
+        reader = csv_module.DictReader(f)
+        rows = list(reader)
+    assert len(rows) == 2
+
+
+def test_write_json_creates_file(tmp_path):
+    with patch("benchmark.RESULTS_DIR", tmp_path):
+        _write_json(_sample_results(), "2026-04-10T10:00:00")
+    json_path = tmp_path / "benchmark_results.json"
+    assert json_path.exists()
+
+
+def test_write_json_structure(tmp_path):
+    with patch("benchmark.RESULTS_DIR", tmp_path):
+        _write_json(_sample_results(), "2026-04-10T10:00:00")
+    json_path = tmp_path / "benchmark_results.json"
+    with json_path.open() as f:
+        data = json.load(f)
+    assert isinstance(data, list)
+    assert len(data) == 1
+    run = data[0]
+    assert "run_timestamp" in run
+    assert "scenarios" in run
+    assert run["scenarios"][0]["name"] == "test_scenario"
+    assert isinstance(run["scenarios"][0]["box_breakdown"], dict)
+
+
+def test_write_json_appends_runs(tmp_path):
+    with patch("benchmark.RESULTS_DIR", tmp_path):
+        _write_json(_sample_results(), "2026-04-10T10:00:00")
+        _write_json(_sample_results(), "2026-04-10T10:01:00")
+    json_path = tmp_path / "benchmark_results.json"
+    with json_path.open() as f:
+        data = json.load(f)
+    assert len(data) == 2
