@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pytest test_benchmark.py -v)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(python benchmark.py)",
+      "Bash(python -m pytest test_benchmark.py -v --tb=short)"
+    ]
+  }
+}

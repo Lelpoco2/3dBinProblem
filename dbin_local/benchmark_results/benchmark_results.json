@@ -1,0 +1,476 @@
+[
+  {
+    "run_timestamp": "2026-04-10T17:50:19",
+    "scenarios": [
+      {
+        "name": "single_sku_tiny",
+        "mode": "single-SKU",
+        "repetitions": 5,
+        "times_s": [
+          0.414302,
+          0.382907,
+          0.402402,
+          0.417307,
+          0.45842
+        ],
+        "min_s": 0.382907,
+        "max_s": 0.45842,
+        "avg_s": 0.4150676,
+        "total_boxes": 1,
+        "box_breakdown": {
+          "BOX_S": 1,
+          "BOX_M": 0
+        },
+        "unassigned_items": 0
+      },
+      {
+        "name": "single_sku_medium",
+        "mode": "single-SKU",
+        "repetitions": 5,
+        "times_s": [
+          11.340711,
+          10.640528,
+          10.725916,
+          10.670142,
+          10.775055
+        ],
+        "min_s": 10.640528,
+        "max_s": 11.340711,
+        "avg_s": 10.8304704,
+        "total_boxes": 1,
+        "box_breakdown": {
+          "BOX_S": 1,
+          "BOX_M": 0,
+          "BOX_L": 0
+        },
+        "unassigned_items": 0
+      },
+      {
+        "name": "multi_sku_small",
+        "mode": "multi-SKU",
+        "repetitions": 5,
+        "times_s": [
+          0.000952,
+          0.000849,
+          0.000966,
+          0.000862,
+          0.000836
+        ],
+        "min_s": 0.000836,
+        "max_s": 0.000966,
+        "avg_s": 0.000893,
+        "total_boxes": 1,
+        "box_breakdown": {
+          "BOX_S": 0,
+          "BOX_M": 1,
+          "BOX_L": 0
+        },
+        "unassigned_items": 0
+      },
+      {
+        "name": "multi_sku_stress",
+        "mode": "multi-SKU",
+        "repetitions": 5,
+        "times_s": [
+          0.012031,
+          0.011105,
+          0.011381,
+          0.013117,
+          0.013399
+        ],
+        "min_s": 0.011105,
+        "max_s": 0.013399,
+        "avg_s": 0.012206600000000001,
+        "total_boxes": 1,
+        "box_breakdown": {
+          "BOX_S": 0,
+          "BOX_M": 0,
+          "BOX_L": 1
+        },
+        "unassigned_items": 0
+      },
+      {
+        "name": "single_sku_large",
+        "mode": "single-SKU",
+        "repetitions": 5,
+        "times_s": [
+          10.590729,
+          10.696758,
+          10.667051,
+          10.395637,
+          10.554576
+        ],
+        "min_s": 10.395637,
+        "max_s": 10.696758,
+        "avg_s": 10.5809502,
+        "total_boxes": 1,
+        "box_breakdown": {
+          "BOX_S": 0,
+          "BOX_M": 1,
+          "BOX_L": 0
+        },
+        "unassigned_items": 0
+      },
+      {
+        "name": "single_sku_100",
+        "mode": "single-SKU",
+        "repetitions": 5,
+        "times_s": [
+          10.983756,
+          10.715216,
+          10.719838,
+          10.625069,
+          10.871089
+        ],
+        "min_s": 10.625069,
+        "max_s": 10.983756,
+        "avg_s": 10.782993600000001,
+        "total_boxes": 1,
+        "box_breakdown": {
+          "BOX_S": 0,
+          "BOX_M": 1,
+          "BOX_L": 0
+        },
+        "unassigned_items": 0
+      },
+      {
+        "name": "multi_sku_100",
+        "mode": "multi-SKU",
+        "repetitions": 5,
+        "times_s": [
+          0.301144,
+          0.304213,
+          0.309151,
+          0.29923,
+          0.283601
+        ],
+        "min_s": 0.283601,
+        "max_s": 0.309151,
+        "avg_s": 0.2994678,
+        "total_boxes": 1,
+        "box_breakdown": {
+          "BOX_S": 0,
+          "BOX_M": 0,
+          "BOX_L": 1
+        },
+        "unassigned_items": 0
+      }
+    ]
+  },
+  {
+    "run_timestamp": "2026-04-10T17:54:24",
+    "scenarios": [
+      {
+        "name": "single_sku_tiny",
+        "mode": "single-SKU",
+        "repetitions": 5,
+        "times_s": [
+          0.486872,
+          0.41627,
+          0.409853,
+          0.399176,
+          0.450156
+        ],
+        "min_s": 0.399176,
+        "max_s": 0.486872,
+        "avg_s": 0.4324654,
+        "total_boxes": 1,
+        "box_breakdown": {
+          "BOX_S": 1,
+          "BOX_M": 0
+        },
+        "unassigned_items": 0
+      },
+      {
+        "name": "single_sku_medium",
+        "mode": "single-SKU",
+        "repetitions": 5,
+        "times_s": [
+          11.42198,
+          10.494268,
+          10.688621,
+          10.460858,
+          10.361893
+        ],
+        "min_s": 10.361893,
+        "max_s": 11.42198,
+        "avg_s": 10.685524,
+        "total_boxes": 1,
+        "box_breakdown": {
+          "BOX_S": 1,
+          "BOX_M": 0,
+          "BOX_L": 0
+        },
+        "unassigned_items": 0
+      },
+      {
+        "name": "multi_sku_small",
+        "mode": "multi-SKU",
+        "repetitions": 5,
+        "times_s": [
+          0.000644,
+          0.000608,
+          0.000598,
+          0.00061,
+          0.000594
+        ],
+        "min_s": 0.000594,
+        "max_s": 0.000644,
+        "avg_s": 0.0006108000000000001,
+        "total_boxes": 1,
+        "box_breakdown": {
+          "BOX_S": 0,
+          "BOX_M": 1,
+          "BOX_L": 0
+        },
+        "unassigned_items": 0
+      },
+      {
+        "name": "multi_sku_stress",
+        "mode": "multi-SKU",
+        "repetitions": 5,
+        "times_s": [
+          0.014658,
+          0.015882,
+          0.015338,
+          0.014542,
+          0.011905
+        ],
+        "min_s": 0.011905,
+        "max_s": 0.015882,
+        "avg_s": 0.014465,
+        "total_boxes": 1,
+        "box_breakdown": {
+          "BOX_S": 0,
+          "BOX_M": 0,
+          "BOX_L": 1
+        },
+        "unassigned_items": 0
+      },
+      {
+        "name": "single_sku_large",
+        "mode": "single-SKU",
+        "repetitions": 5,
+        "times_s": [
+          10.445315,
+          10.467171,
+          10.642432,
+          10.849185,
+          10.498496
+        ],
+        "min_s": 10.445315,
+        "max_s": 10.849185,
+        "avg_s": 10.580519800000001,
+        "total_boxes": 1,
+        "box_breakdown": {
+          "BOX_S": 0,
+          "BOX_M": 1,
+          "BOX_L": 0
+        },
+        "unassigned_items": 0
+      },
+      {
+        "name": "single_sku_100",
+        "mode": "single-SKU",
+        "repetitions": 5,
+        "times_s": [
+          10.657168,
+          11.224193,
+          11.868276,
+          12.557885,
+          11.882361
+        ],
+        "min_s": 10.657168,
+        "max_s": 12.557885,
+        "avg_s": 11.6379766,
+        "total_boxes": 1,
+        "box_breakdown": {
+          "BOX_S": 0,
+          "BOX_M": 1,
+          "BOX_L": 0
+        },
+        "unassigned_items": 0
+      },
+      {
+        "name": "multi_sku_100",
+        "mode": "multi-SKU",
+        "repetitions": 5,
+        "times_s": [
+          0.353592,
+          0.32977,
+          0.334784,
+          0.347902,
+          0.325062
+        ],
+        "min_s": 0.325062,
+        "max_s": 0.353592,
+        "avg_s": 0.338222,
+        "total_boxes": 1,
+        "box_breakdown": {
+          "BOX_S": 0,
+          "BOX_M": 0,
+          "BOX_L": 1
+        },
+        "unassigned_items": 0
+      }
+    ]
+  },
+  {
+    "run_timestamp": "2026-04-10T17:56:30",
+    "scenarios": [
+      {
+        "name": "single_sku_tiny",
+        "mode": "single-SKU",
+        "repetitions": 5,
+        "times_s": [
+          0.360331,
+          0.366311,
+          0.329179,
+          0.337651,
+          0.351709
+        ],
+        "min_s": 0.329179,
+        "max_s": 0.366311,
+        "avg_s": 0.3490362,
+        "total_boxes": 1,
+        "box_breakdown": {
+          "BOX_S": 1,
+          "BOX_M": 0
+        },
+        "unassigned_items": 0
+      },
+      {
+        "name": "single_sku_medium",
+        "mode": "single-SKU",
+        "repetitions": 5,
+        "times_s": [
+          11.752922,
+          11.765921,
+          12.295916,
+          11.085077,
+          10.677805
+        ],
+        "min_s": 10.677805,
+        "max_s": 12.295916,
+        "avg_s": 11.5155282,
+        "total_boxes": 1,
+        "box_breakdown": {
+          "BOX_S": 1,
+          "BOX_M": 0,
+          "BOX_L": 0
+        },
+        "unassigned_items": 0
+      },
+      {
+        "name": "multi_sku_small",
+        "mode": "multi-SKU",
+        "repetitions": 5,
+        "times_s": [
+          0.000634,
+          0.000703,
+          0.000713,
+          0.000685,
+          0.000978
+        ],
+        "min_s": 0.000634,
+        "max_s": 0.000978,
+        "avg_s": 0.0007425999999999999,
+        "total_boxes": 1,
+        "box_breakdown": {
+          "BOX_S": 0,
+          "BOX_M": 1,
+          "BOX_L": 0
+        },
+        "unassigned_items": 0
+      },
+      {
+        "name": "multi_sku_stress",
+        "mode": "multi-SKU",
+        "repetitions": 5,
+        "times_s": [
+          0.014215,
+          0.015094,
+          0.012828,
+          0.01274,
+          0.017504
+        ],
+        "min_s": 0.01274,
+        "max_s": 0.017504,
+        "avg_s": 0.0144762,
+        "total_boxes": 1,
+        "box_breakdown": {
+          "BOX_S": 0,
+          "BOX_M": 0,
+          "BOX_L": 1
+        },
+        "unassigned_items": 0
+      },
+      {
+        "name": "single_sku_large",
+        "mode": "single-SKU",
+        "repetitions": 5,
+        "times_s": [
+          10.796982,
+          10.611762,
+          10.492804,
+          10.54896,
+          10.909782
+        ],
+        "min_s": 10.492804,
+        "max_s": 10.909782,
+        "avg_s": 10.672058,
+        "total_boxes": 1,
+        "box_breakdown": {
+          "BOX_S": 0,
+          "BOX_M": 1,
+          "BOX_L": 0
+        },
+        "unassigned_items": 0
+      },
+      {
+        "name": "single_sku_100",
+        "mode": "single-SKU",
+        "repetitions": 5,
+        "times_s": [
+          10.872725,
+          10.692073,
+          10.767371,
+          11.009469,
+          10.650754
+        ],
+        "min_s": 10.650754,
+        "max_s": 11.009469,
+        "avg_s": 10.7984784,
+        "total_boxes": 1,
+        "box_breakdown": {
+          "BOX_S": 0,
+          "BOX_M": 1,
+          "BOX_L": 0
+        },
+        "unassigned_items": 0
+      },
+      {
+        "name": "multi_sku_100",
+        "mode": "multi-SKU",
+        "repetitions": 5,
+        "times_s": [
+          0.301236,
+          0.308186,
+          0.317083,
+          0.290272,
+          0.293322
+        ],
+        "min_s": 0.290272,
+        "max_s": 0.317083,
+        "avg_s": 0.3020198,
+        "total_boxes": 1,
+        "box_breakdown": {
+          "BOX_S": 0,
+          "BOX_M": 0,
+          "BOX_L": 1
+        },
+        "unassigned_items": 0
+      }
+    ]
+  }
+]

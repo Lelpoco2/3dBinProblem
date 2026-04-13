@@ -108,9 +108,9 @@ def draw_item(ax, position, dims, label: str,
     tz = z0 + h
 
     ax.text(tx, ty, tz + 0.5, label,
-            ha='center', va='bottom', fontsize=11,
+            ha='center', va='bottom', fontsize=7,
             color='#1a1a2e', fontweight='bold',
-            bbox=dict(facecolor='white', alpha=0.6, edgecolor='none', pad=2))
+            bbox=dict(facecolor='white', alpha=0.6, edgecolor='none', pad=1))
 
 
 def _input_panel_text(box_types, items) -> str:
@@ -172,7 +172,8 @@ def _build_legend(ax, box_instance, colors=_ITEM_COLORS):
 
     ax.legend(
         handles=handles,
-        loc='upper left',
+        loc='upper right',
+        bbox_to_anchor=(-0.05, 0.5),
         fontsize=10,
         title="Informazioni",
         title_fontsize=11,
@@ -333,8 +334,16 @@ def visualize_all_boxes(
 
     fig = plt.figure(figsize=(9 * cols, 8 * rows))
 
+    # For exactly 3 boxes centre the 3rd subplot in the second row
+    if n == 3:
+        gs = fig.add_gridspec(2, 4)
+        subplot_specs = [gs[0, 0:2], gs[0, 2:4], gs[1, 1:3]]
+    else:
+        gs = fig.add_gridspec(rows, cols)
+        subplot_specs = [gs[i // cols, i % cols] for i in range(n)]
+
     for i, box_instance in enumerate(boxes):
-        ax = fig.add_subplot(rows, cols, i + 1, projection='3d')
+        ax = fig.add_subplot(subplot_specs[i], projection='3d')
 
         L = box_instance.box_type.inner_length
         W = box_instance.box_type.inner_width
@@ -385,5 +394,5 @@ def visualize_all_boxes(
             bbox=dict(facecolor='#eef4fb', alpha=0.95, edgecolor='steelblue', pad=8)
         )
 
-    plt.tight_layout(rect=[left_margin, 0.06, 1, 1])
+    plt.tight_layout(rect=[left_margin, 0.06, 1, 0.93])
     plt.show()
